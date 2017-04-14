@@ -67,22 +67,27 @@ class VozForums:
             return len(parser.find_all('td', { "class": "alt1Active" })) > 0
         else:
             return False
+    @classmethod
+    def isSub(self, parser):
+        if (parser):
+            return len(parser.find_all('td', { "class": "alt2" })) > 2
+        else:
+            return False
 
     @classmethod
-    def extractFid(self, url, fid=None):
+    def extractFid(self, url):
         subForums = []
+
         parser = self.beauti(self.get(self.link(url)))
-        e = self.hasSubForums(parser)
-        if (e):
+
+        if (self.hasSubForums(parser)):
             for td in (parser.find_all('td', { "class": "alt1Active" })):
-                isSub = len(td.parent.find_all('td', { "class": "alt2" })) > 2
-                if (isSub==True):
-                    title = "--- " + td.div.a.strong.string
-                else:
-                    title = td.div.a.strong.string
+                if (self.isSub(td.parent)):
+                    continue
                 subForums.append(Forum(
                     url=self.link(td.div.a.get('href')), 
-                    title=title
+                    title=td.div.a.strong.string,
+                    subForums=self.extractFid(url = td.div.a.get('href'))
                 ))
         return subForums
     
@@ -98,7 +103,7 @@ class VozForums:
                     self.__forums.append(Forum(
                         url=self.link(fcat[1].get('href')), 
                         title=fcat[1].string, 
-                        subForums=self.extractFid(url = fcat[1].get('href'), fid = fid)
+                        subForums=self.extractFid(url = fcat[1].get('href'))
                     ))
     
     def listThread(self, furl):
